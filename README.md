@@ -1,2 +1,3 @@
-# VoiceManager
-Bot Discord de gestion de salon privé.
+# VoiceMaster
+
+## La documentation sera prochainement disponible..
