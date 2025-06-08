@@ -1,0 +1,11 @@
+{
+  "owner": "VOTRE ID",
+  "presence": {
+    "status": "online",
+    "activity": {
+      "name": "VoiceMaster",
+      "type": "Streaming",
+      "url": "https://twitch.tv/beachbots"
+    }
+  }
+}
