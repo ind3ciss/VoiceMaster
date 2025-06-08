@@ -147,7 +147,7 @@ module.exports = {
 
     // 📌 LOG : Création du salon vocal
     const embed = new EmbedBuilder()
-      .setColor('#393a41')
+      .setColor('#0079ff')
       .setDescription(`\`➕\` ${newState.member} a créé le salon **\`${privateChan.name}\`**`);
 
     await logToChannel(guild, config.logChannelId, embed);

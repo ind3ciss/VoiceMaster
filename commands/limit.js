@@ -1,7 +1,7 @@
 const {
   SlashCommandBuilder,
   EmbedBuilder,
-  ChannelType,
+  PermissionFlagsBits,
 } = require('discord.js');
 const fs = require('fs/promises');
 const path = require('path');
@@ -24,80 +24,74 @@ async function logToChannel(guild, logChannelId, embed) {
 
 module.exports = {
   data: new SlashCommandBuilder()
-    .setName('kick')
-    .setDescription('Expulse un membre de votre salon vocal privé')
-    .addUserOption(opt =>
-      opt.setName('utilisateur')
-         .setDescription('Membre à expulser')
+    .setName('limit')
+    .setDescription('Définit une limite de membres pour votre salon vocal privé')
+    .addIntegerOption(opt =>
+      opt.setName('nombre')
+         .setDescription('Nombre maximum de membres (entre 2 et 99)')
          .setRequired(true)
+         .setMinValue(2)
+         .setMaxValue(99)
     ),
 
   /**
    * @param {import('discord.js').ChatInputCommandInteraction} interaction
    */
   async execute(interaction) {
-    const member = interaction.member;
-    const target = interaction.options.getMember('utilisateur');
+    const member    = interaction.member;
+    const guild     = interaction.guild;
+    const channel   = interaction.channel;
+    const maxUsers  = interaction.options.getInteger('nombre');
+
     const voiceDB = await readJSON(VOICE_DB_FILE);
     const config  = await readJSON(CONFIG_FILE);
 
-    // 1. Vérifie que l'utilisateur est dans un salon vocal
+    // 1. Vérifie que l'utilisateur est dans un vocal
     if (!member.voice.channel) {
       const embed = new EmbedBuilder()
-        .setColor('#FF0000')
+        .setColor('#ff0000')
         .setDescription('`❌` Vous devez être connecté à votre salon vocal privé.');
       return interaction.reply({ embeds: [embed], ephemeral: true });
     }
 
-    const userVoiceChannel = member.voice.channel;
+    const userVoice = member.voice.channel;
 
-    // 2. Vérifie que le salon vocal est un salon géré
-    if (!voiceDB[userVoiceChannel.id]) {
+    // 2. Vérifie que le vocal est géré
+    if (!voiceDB[userVoice.id]) {
       const embed = new EmbedBuilder()
-        .setColor('#FF0000')
-        .setDescription('`❌` Ce salon vocal n’est pas un salon privé géré par le bot.');
+        .setColor('#ff0000')
+        .setDescription('`❌` Ce salon n’est pas un salon privé géré par le bot.');
       return interaction.reply({ embeds: [embed], ephemeral: true });
     }
 
-    // 3. Vérifie que la commande est exécutée dans le salon texte dont l'ID = salon vocal
-    if (interaction.channel.id !== userVoiceChannel.id) {
+    // 3. Vérifie que la commande est exécutée dans le salon texte lié
+    if (channel.id !== userVoice.id) {
       const embed = new EmbedBuilder()
-        .setColor('#FF0000')
-        .setDescription('`❌` Cette commande ne peut être utilisée que dans le salon **textuel lié** à votre vocal.');
+        .setColor('#ff0000')
+        .setDescription('`❌` Cette commande doit être utilisée dans le salon texte lié à votre vocal.');
       return interaction.reply({ embeds: [embed], ephemeral: true });
     }
 
     // 4. Vérifie que l'utilisateur est le propriétaire
-    const ownerId = voiceDB[userVoiceChannel.id];
+    const ownerId = voiceDB[userVoice.id];
     if (member.id !== ownerId) {
       const embed = new EmbedBuilder()
-        .setColor('#FF0000')
+        .setColor('#ff0000')
         .setDescription('`❌` Seul le propriétaire du salon peut utiliser cette commande.');
       return interaction.reply({ embeds: [embed], ephemeral: true });
     }
 
-    // 5. Vérifie que la cible est dans le même salon vocal
-    if (!target.voice.channel || target.voice.channel.id !== userVoiceChannel.id) {
-      const embed = new EmbedBuilder()
-        .setColor('#FF0000')
-        .setDescription('`❌` L’utilisateur ciblé n’est pas dans votre salon vocal.');
-      return interaction.reply({ embeds: [embed], ephemeral: true });
-    }
+    // 5. Appliquer la limite
+    await userVoice.setUserLimit(maxUsers);
 
-    // 6. Déconnecte la cible
-    await target.voice.disconnect();
-
-    // Confirmation publique
     const confirmEmbed = new EmbedBuilder()
-      .setColor('#725c41')
-      .setDescription(`\`✅\` ${target.user.username} a été expulsé du salon vocal.`);
+      .setColor('#e06fff')
+      .setDescription(`\`👥\` Le salon est désormais limité à **${maxUsers}** membre(s).`);
     await interaction.reply({ embeds: [confirmEmbed], ephemeral: false });
 
-    // Log
     const logEmbed = new EmbedBuilder()
-      .setColor('#725c41')
-      .setDescription(`\`👢\` \`${member.user.tag}\` a expulsé \`${target.user.tag}\` de **${userVoiceChannel.name}**`)
-
-    await logToChannel(interaction.guild, config.logChannelId, logEmbed);
+      .setColor('#e06fff')
+      .setDescription(`\`👥\` \`${member.user.tag}\` a défini une limite de **\`${maxUsers}\`** membres sur le salon **\`${userVoice.name}\`**`)
+    await logToChannel(guild, config.logChannelId, logEmbed);
   },
 };
