@@ -99,4 +99,4 @@ Vous pouvez rejoindre notre serveur de support si vous avez un problème concern
 
 Les contributions sont les bienvenues ! Ouvrez une issue ou une pull request pour proposer des améliorations.
 
-> 🌊 Bot développé par [@indeciss](https://github.com/ind3ciss) pour la gestion avancée des rôles Discord.
+> 🌊 Bot développé par [@indeciss](https://github.com/ind3ciss) pour la gestion premium des vocaux privés de votre serveur
