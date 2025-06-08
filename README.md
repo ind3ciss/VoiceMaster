@@ -1,6 +1,6 @@
-# 🔊 PrivateVoiceManager
+# 🔊 VoiceMaster
 
-**PrivateVoiceManager** est un bot Discord en **Discord.js** qui permet aux utilisateurs de créer, gérer et personnaliser leurs salons vocaux privés. Il est idéal pour les serveurs communautaires où les membres veulent discuter entre amis dans un espace privé contrôlé. Le bot est simple à configurer et à utiliser pour un serveur unique.
+**VoiceMaster** est un bot Discord en **Discord.js** qui permet aux utilisateurs de créer, gérer et personnaliser leurs salons vocaux privés. Il est idéal pour les serveurs communautaires où les membres veulent discuter entre amis dans un espace privé contrôlé. Le bot est simple à configurer et à utiliser pour un serveur unique.
 
 ## ⚙️ Fonctionnalités
 
@@ -13,7 +13,7 @@
 - **Suppression automatique des salons inactifs**
 - **Logs complets** si un salon de log est défini via `/setlog`
 
-## 🛠️ Commandes principales
+## 📊 Commandes principales
 
 | Commande | Description |
 |----------|-------------|
@@ -35,8 +35,7 @@
 
 1. **Cloner le dépôt**
    ```bash
-   git clone https://github.com/votreutilisateur/PrivateVoiceManager.git
-   cd PrivateVoiceManager
+   git clone https://github.com/ind3ciss/VoiceMaster.git
    ```
 
 2. **Installer les dépendances**
@@ -45,26 +44,28 @@
    ```
 
 3. **Configurer le bot**
-   - Créez un fichier `.env` :
+   - Renommer le fichier `.env.example` en `.env` et collez y les informations suivantes :
      ```
      TOKEN=VOTRE_TOKEN
      APP_ID=ID_DU_BOT
-     GUILD_ID=ID_DU_SERVEUR
      ```
    - Personnalisez `config.json` (présence du bot, ID owner, etc.)
    - Le format vocal global se définit dans `db.json` avec la clé `nameFormat` :
      ```json
      {
-       "nameFormat": "🔊・{username}"
+       "owner": "VOTRE ID",
+       "presence": {
+            "status": "online",
+            "activity": {
+            "name": "VoiceMaster",
+            "type": "Streaming",
+            "url": "https://twitch.tv/beachbots"
+            }
+        }
      }
      ```
 
-4. **Déployer les commandes**
-   ```bash
-   node deploy-commands.js
-   ```
-
-5. **Lancer le bot**
+4. **Lancer le bot**
    ```bash
    node index.js
    ```
@@ -84,18 +85,18 @@
 - Lire les messages/textes (`Read Messages`)
 - Gérer les permissions (`Manage Roles/Permissions`)
 
-## 🧱 Dépendances
+## 🔑 Dépendances
 
 - [discord.js](https://discord.js.org/)
 - [dotenv](https://www.npmjs.com/package/dotenv)
 - Node.js 18+
 
-## 🤝 Contribuer
+## ☎️ Serveur Support
 
-Les contributions sont les bienvenues ! Ouvrez une _issue_ ou une _pull request_.
+Vous pouvez rejoindre notre serveur de support si vous avez un problème concernant notre bot avec ce lien : https://discord.gg/beachbots
 
-## 📞 Support
+## 🤍 Contribution
 
-Un serveur support est en cours. En attendant, ouvrez une _issue_ sur GitHub si besoin.
+Les contributions sont les bienvenues ! Ouvrez une issue ou une pull request pour proposer des améliorations.
 
-> 🎧 Développé avec ❤️ par [@indeciss](https://github.com/ind3ciss) pour une expérience vocale premium sur Discord.
+> 🌊 Bot développé par [@indeciss](https://github.com/ind3ciss) pour la gestion avancée des rôles Discord.
