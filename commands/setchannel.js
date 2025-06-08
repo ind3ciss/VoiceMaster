@@ -14,6 +14,15 @@ const DB_FILE     = path.join(__dirname, '../db/db.json');
 // Map en mémoire : guildId → timestamp
 const cooldowns = new Map();
 
+/* -------- Embeds réutilisables -------- */
+const noAdminEmbed = new EmbedBuilder()
+  .setDescription('`❌` Vous devez être administrateur.')
+  .setColor('#ff0000');
+
+const wrongTypeEmbed = new EmbedBuilder()
+  .setDescription('`❌` Seuls les salons **vocaux classiques** sont acceptés.')
+  .setColor('#ff0000');
+
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('setchannel')
@@ -22,32 +31,26 @@ module.exports = {
       opt.setName('vocal')
          .setDescription('Salon vocal (obligatoire)')
          .setRequired(true)
-         .addChannelTypes(ChannelType.GuildVoice)      // liste déroulante = vocaux seuls
+         .addChannelTypes(ChannelType.GuildVoice)   // la liste ne montre que les vocaux
     ),
 
   /** @param {import('discord.js').ChatInputCommandInteraction} interaction */
   async execute(interaction) {
     /* 1) Vérification des permissions */
     if (!interaction.memberPermissions.has(PermissionFlagsBits.Administrator)) {
-      return interaction.reply({
-        content: '❌ Vous devez être administrateur.',
-        ephemeral: true,
-      });
+      return interaction.reply({ embeds: [noAdminEmbed], ephemeral: true });
     }
 
     /* 2) Cool-down par serveur */
     const now      = Date.now();
     const lastUsed = cooldowns.get(interaction.guildId) ?? 0;
-    if (now - lastUsed < COOLDOWN_MS) return;          // rejet silencieux
+    if (now - lastUsed < COOLDOWN_MS) return;        // rejet silencieux
     cooldowns.set(interaction.guildId, now);
 
-    /* 3) Récupération et validation du salon */
+    /* 3) Validation du salon */
     const channel = interaction.options.getChannel('vocal');
     if (channel.type !== ChannelType.GuildVoice) {
-      return interaction.reply({
-        content: '❌ Seuls les salons vocaux classiques sont acceptés.',
-        ephemeral: true,
-      });
+      return interaction.reply({ embeds: [wrongTypeEmbed], ephemeral: true });
     }
 
     /* 4) Écriture dans db.json */
@@ -55,16 +58,18 @@ module.exports = {
     try {
       const raw = await fs.readFile(DB_FILE, 'utf8');
       db = JSON.parse(raw);
-    } catch {/* fichier inexistant ou vide → on crée plus bas */}
+    } catch {
+      /* fichier absent ou vide → on part d’un objet vide */
+    }
 
     db.voiceChannelId = channel.id;
     await fs.writeFile(DB_FILE, JSON.stringify(db, null, 2));
 
     /* 5) Confirmation */
-    const embed = new EmbedBuilder()
+    const successEmbed = new EmbedBuilder()
       .setDescription(`\`✅\` Salon vocal défini sur ${channel}`)
       .setColor('#03e3fc');
 
-    await interaction.reply({ embeds: [embed], ephemeral: true });
+    await interaction.reply({ embeds: [successEmbed], ephemeral: true });
   },
 };

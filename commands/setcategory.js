@@ -1,37 +1,37 @@
-// commands/setlog.js
+// commands/setcategory.js
 const {
   SlashCommandBuilder,
-  EmbedBuilder,
   PermissionFlagsBits,
   ChannelType,
+  EmbedBuilder,
 } = require('discord.js');
 const fs   = require('fs/promises');
 const path = require('path');
 
-const COOLDOWN_MS = 10_000;                          // 10 s
+const COOLDOWN_MS = 10_000;                           // 10 s
 const DB_FILE     = path.join(__dirname, '../db/db.json');
 
 // Map en mémoire : guildId → timestamp
 const cooldowns = new Map();
 
-/* -------- Embeds réutilisables -------- */
+/* ---------- Embeds réutilisables ---------- */
 const noAdminEmbed = new EmbedBuilder()
   .setDescription('`❌` Vous devez être administrateur.')
   .setColor('#ff0000');
 
 const wrongTypeEmbed = new EmbedBuilder()
-  .setDescription('`❌` Seuls les salons **textuels classiques** sont autorisés.')
+  .setDescription('`❌` Seules les **catégories** sont autorisées.')
   .setColor('#ff0000');
 
 module.exports = {
   data: new SlashCommandBuilder()
-    .setName('setlog')
-    .setDescription('Définit le salon où seront envoyés les logs')
+    .setName('setcategory')
+    .setDescription('Définit la catégorie où seront créés les vocaux privés')
     .addChannelOption(opt =>
-      opt.setName('channel')
-         .setDescription('Salon de logs (texte uniquement)')
+      opt.setName('categorie')
+         .setDescription('Catégorie cible (obligatoire)')
          .setRequired(true)
-         .addChannelTypes(ChannelType.GuildText)      // Discord ne montre que les textes
+         .addChannelTypes(ChannelType.GuildCategory)  // Discord ne montre que les catégories
     ),
 
   /** @param {import('discord.js').ChatInputCommandInteraction} interaction */
@@ -44,31 +44,30 @@ module.exports = {
     /* 2) Cool-down par serveur */
     const now      = Date.now();
     const lastUsed = cooldowns.get(interaction.guildId) ?? 0;
-    if (now - lastUsed < COOLDOWN_MS) return;        // rejet silencieux
+    if (now - lastUsed < COOLDOWN_MS) return;         // rejet silencieux
     cooldowns.set(interaction.guildId, now);
 
-    /* 3) Validation du salon */
-    const channel = interaction.options.getChannel('channel');
-    if (channel.type !== ChannelType.GuildText) {
+    /* 3) Validation du choix */
+    const category = interaction.options.getChannel('categorie');
+    if (category.type !== ChannelType.GuildCategory) {
       return interaction.reply({ embeds: [wrongTypeEmbed], ephemeral: true });
     }
 
     /* 4) Écriture dans db.json */
     let db = {};
     try {
-      const raw = await fs.readFile(DB_FILE, 'utf8');
-      db = JSON.parse(raw);
+      db = JSON.parse(await fs.readFile(DB_FILE, 'utf8'));
     } catch {
-      /* fichier absent ou invalide → on continue avec un objet vide */
+      /* fichier absent ou invalide → on part d’un objet vide */
     }
 
-    db.logChannelId = channel.id;
+    db.privateCategoryId = category.id;
     await fs.writeFile(DB_FILE, JSON.stringify(db, null, 2));
 
     /* 5) Confirmation */
     const successEmbed = new EmbedBuilder()
-      .setDescription(`\`✅\` Salon de logs défini sur ${channel}`)
-      .setColor('#26ff00');
+      .setDescription(`\`✅\` Catégorie définie sur **${category.name}**`)
+      .setColor('#03e3fc');
 
     await interaction.reply({ embeds: [successEmbed], ephemeral: true });
   },
